@@ -2,8 +2,11 @@ use std::{
     fs,
     fs::OpenOptions,
     error::Error,
-    io::prelude::*
+    io::prelude::*,
+    path::PathBuf,
 };
+
+use dirs::home_dir;
 
 pub struct Config {
     pub cmd: String,
@@ -32,30 +35,47 @@ impl Config {
     }
 }
 
+fn new_todolist(filepath: &PathBuf) -> Result<(), Box<dyn Error>>{
+    fs::write(filepath, "")?;
+    println!("Created new todo list");
+    Ok(())
+}
+
+fn list_todolist(filepath: &PathBuf) -> Result<(), Box<dyn Error>> {
+    let contents = fs::read_to_string(filepath)?;
+    print!("Todo list:\n{}", contents);
+    Ok(())
+}
+
+fn add_todolist(filepath: &PathBuf, item: String) -> Result<(), Box<dyn Error>> {
+    let mut file = OpenOptions::new()
+        .write(true)
+        .append(true)
+        .open(filepath)?;
+
+    writeln!(file, "* {}", item)?;
+    Ok(())
+}
+
 /// * `create` must create a new todo list
 /// * `list` must list current todo list
 /// * `add` `item` must insert a new todo item in the list
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
-    let filepath = "todo_list";
+
+    let filepath: PathBuf = home_dir().unwrap_or_else(|| {
+        println!("could not find home directory, using curent location");
+        PathBuf::new()
+    }).join("todo_list");
+
     match config.cmd.as_str() {
         "new" => {
-            fs::write(filepath, "")?;
-            println!("Created new todo list");
-            Ok(())
+            new_todolist(&filepath)
         }
         "list" => {
-            let contents = fs::read_to_string(filepath)?;
-            print!("Todo list:\n{}", contents);
-            Ok(())
+            list_todolist(&filepath)
         }
         "add" => {
-            let mut file = OpenOptions::new()
-                .write(true)
-                .append(true)
-                .open(filepath)?;
-
-            writeln!(file, "* {}", config.args.unwrap())?;
-            Ok(())
+            add_todolist(&filepath, config.args.unwrap())
         }
         _ => Err("unrecognized command.")?
     }
