@@ -26,7 +26,7 @@ impl Config {
         let args = if cmd == "add" && args.len() < 3{
             return Err("not enough arguments. Usage: list, new, add [name]");
         } else if cmd == "add" {
-            Some(args[2].clone())
+            Some(args[2..].join(" ").clone())
         } else {
             None
         };
