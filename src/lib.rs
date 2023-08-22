@@ -2,7 +2,7 @@ use std::{
     fs,
     fs::OpenOptions,
     error::Error,
-    io::prelude::*,
+    io::{prelude::*, BufReader},
     path::PathBuf,
 };
 
@@ -29,6 +29,8 @@ impl Config {
             Some(args[2..].join(" ").clone())
         } else if cmd == "copy"{
             Some(args[2].clone())
+        } else if cmd == "delete" {
+            Some(args[2].parse().unwrap())
         } else {
             None
         };
@@ -44,8 +46,11 @@ fn new_todolist(filepath: &PathBuf) -> Result<(), Box<dyn Error>>{
 }
 
 fn list_todolist(filepath: &PathBuf) -> Result<(), Box<dyn Error>> {
-    let contents = fs::read_to_string(filepath)?;
-    print!("Todo list:\n{}", contents);
+    let file = fs::File::open(filepath)?;
+    let reader = BufReader::new(file).lines();
+    for (id, line) in reader.enumerate() {
+        println!("{id}. {}", line.unwrap());
+    }
     Ok(())
 }
 
@@ -55,7 +60,7 @@ fn add_todolist(filepath: &PathBuf, item: String) -> Result<(), Box<dyn Error>> 
         .append(true)
         .open(filepath)?;
 
-    writeln!(file, "* {}", item)?;
+    writeln!(file, "{}", item)?;
     Ok(())
 }
 
@@ -72,10 +77,33 @@ fn copy_todolist(filepath: &PathBuf, otherpath: String) -> Result<(), Box<dyn Er
     Ok(())
 }
 
+fn delete_todolist(filepath: &PathBuf, index: usize) -> Result<(), Box<dyn Error>> {
+    let file = fs::File::open(filepath)?;
+    let mut lines: Vec<String> = 
+        BufReader::new(file)
+            .lines()
+            .map(|l| l.unwrap())
+            .collect();
+
+    if index >= lines.len() {
+        return Err("index out of bounds.".into());
+    }
+
+    lines.remove(index);
+
+    let mut file = fs::File::create(filepath)?;
+    for line in lines {
+        writeln!(file, "{}", line)?;
+    }
+
+    Ok(())
+}
+
 /// * `create` must create a new todo list
 /// * `list` must list current todo list
 /// * `add` `item` must insert a new todo item in the list
 /// * `copy` `otherpath` must copy a file into the list
+/// * `delete` `id` removes line from the list
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
 
     let filepath: PathBuf = home_dir().unwrap_or_else(|| {
@@ -95,6 +123,9 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
         }
         "copy" => {
             copy_todolist(&filepath, config.args.unwrap())
+        }
+        "delete" => {
+            delete_todolist(&filepath, config.args.unwrap().parse()?)
         }
         _ => Err("unrecognized command. Usage: list, new, add [name], copy [path]")?
     }
