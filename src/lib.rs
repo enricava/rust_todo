@@ -18,13 +18,19 @@ impl Config {
     /// `create`, `list`, `add` `item`, `copy path`.
     pub fn new(args: &[String]) -> Result<Config, &'static str> {
         if args.len() < 2 {
-            return Err("not enough arguments. Usage: list, new, add [name], copy [path]");
+            return Err(
+                "not enough arguments.
+                Usage: list, new, add [name], copy [path], delete [index]"
+            );
         }
 
         let cmd = args[1].clone();
 
         let args = if (cmd == "add" || cmd == "copy") && args.len() < 3{
-            return Err("not enough arguments. Usage: list, new, add [name], copy [path]");
+            return Err("
+                not enough arguments.
+                Usage: list, new, add [name], copy [path], delete [index]"
+            );
         } else if cmd == "add" {
             Some(args[2..].join(" ").clone())
         } else if cmd == "copy"{
@@ -127,6 +133,6 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
         "delete" => {
             delete_todolist(&filepath, config.args.unwrap().parse()?)
         }
-        _ => Err("unrecognized command. Usage: list, new, add [name], copy [path]")?
+        _ => Err("unrecognized command. Usage: list, new, add [name], copy [path], delete [index]")?
     }
 }
