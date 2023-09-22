@@ -42,12 +42,15 @@ impl Config {
     }
 }
 
+/// Creates a new file that will hold the todo list.
+/// Truncates by default.
 fn new_todolist(filepath: &PathBuf) -> Result<(), Box<dyn Error>> {
     fs::write(filepath, "")?;
     println!("Created new todo list");
     Ok(())
 }
 
+/// Lists the lines in the todo list.
 fn list_todolist(filepath: &PathBuf) -> Result<(), Box<dyn Error>> {
     let file = fs::File::open(filepath)?;
     let reader = BufReader::new(file).lines();
@@ -57,6 +60,7 @@ fn list_todolist(filepath: &PathBuf) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+/// Adds a new item to the end of the list.
 fn add_todolist(filepath: &PathBuf, item: String) -> Result<(), Box<dyn Error>> {
     let mut file = OpenOptions::new().write(true).append(true).open(filepath)?;
 
@@ -64,6 +68,7 @@ fn add_todolist(filepath: &PathBuf, item: String) -> Result<(), Box<dyn Error>> 
     Ok(())
 }
 
+/// Copies the contents of a file in `otherpath` into the todolist in `filepath`
 fn copy_todolist(filepath: &PathBuf, otherpath: String) -> Result<(), Box<dyn Error>> {
     let mut file = OpenOptions::new().write(true).append(true).open(filepath)?;
 
@@ -74,6 +79,7 @@ fn copy_todolist(filepath: &PathBuf, otherpath: String) -> Result<(), Box<dyn Er
     Ok(())
 }
 
+/// Deletes the item at position `index` from the list.
 fn delete_todolist(filepath: &PathBuf, index: usize) -> Result<(), Box<dyn Error>> {
     let file = fs::File::open(filepath)?;
     let mut lines: Vec<String> = BufReader::new(file).lines().map(|l| l.unwrap()).collect();
