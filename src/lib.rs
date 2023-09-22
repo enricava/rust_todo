@@ -1,7 +1,7 @@
 use std::{
+    error::Error,
     fs,
     fs::OpenOptions,
-    error::Error,
     io::{prelude::*, BufReader},
     path::PathBuf,
 };
@@ -10,7 +10,7 @@ use dirs::home_dir;
 
 pub struct Config {
     pub cmd: String,
-    pub args: Option<String>
+    pub args: Option<String>,
 }
 
 impl Config {
@@ -18,34 +18,31 @@ impl Config {
     /// `new`, `list`, `add` `item`, `copy` `path`, `delete` `index`.
     pub fn new(args: &[String]) -> Result<Config, &'static str> {
         if args.len() < 2 {
-            return Err(
-                "not enough arguments.
-                Usage: list, new, add [name], copy [path], delete [index]"
-            );
+            return Err("not enough arguments.
+                Usage: list, new, add [name], copy [path], delete [index]");
         }
 
         let cmd = args[1].clone();
 
-        let args = if (cmd == "add" || cmd == "copy") && args.len() < 3{
+        let args = if (cmd == "add" || cmd == "copy") && args.len() < 3 {
             return Err("
                 not enough arguments.
-                Usage: list, new, add [name], copy [path], delete [index]"
-            );
+                Usage: list, new, add [name], copy [path], delete [index]");
         } else if cmd == "add" {
             Some(args[2..].join(" ").clone())
-        } else if cmd == "copy"{
+        } else if cmd == "copy" {
             Some(args[2].clone())
         } else if cmd == "delete" {
             Some(args[2].parse().unwrap())
         } else {
             None
         };
-        
-        Ok(Config { cmd , args})
+
+        Ok(Config { cmd, args })
     }
 }
 
-fn new_todolist(filepath: &PathBuf) -> Result<(), Box<dyn Error>>{
+fn new_todolist(filepath: &PathBuf) -> Result<(), Box<dyn Error>> {
     fs::write(filepath, "")?;
     println!("Created new todo list");
     Ok(())
@@ -61,20 +58,14 @@ fn list_todolist(filepath: &PathBuf) -> Result<(), Box<dyn Error>> {
 }
 
 fn add_todolist(filepath: &PathBuf, item: String) -> Result<(), Box<dyn Error>> {
-    let mut file = OpenOptions::new()
-        .write(true)
-        .append(true)
-        .open(filepath)?;
+    let mut file = OpenOptions::new().write(true).append(true).open(filepath)?;
 
     writeln!(file, "{}", item)?;
     Ok(())
 }
 
 fn copy_todolist(filepath: &PathBuf, otherpath: String) -> Result<(), Box<dyn Error>> {
-    let mut file = OpenOptions::new()
-        .write(true)
-        .append(true)
-        .open(filepath)?;
+    let mut file = OpenOptions::new().write(true).append(true).open(filepath)?;
 
     let copy_contents = fs::read_to_string(otherpath)?;
 
@@ -85,11 +76,7 @@ fn copy_todolist(filepath: &PathBuf, otherpath: String) -> Result<(), Box<dyn Er
 
 fn delete_todolist(filepath: &PathBuf, index: usize) -> Result<(), Box<dyn Error>> {
     let file = fs::File::open(filepath)?;
-    let mut lines: Vec<String> = 
-        BufReader::new(file)
-            .lines()
-            .map(|l| l.unwrap())
-            .collect();
+    let mut lines: Vec<String> = BufReader::new(file).lines().map(|l| l.unwrap()).collect();
 
     if index >= lines.len() {
         return Err("index out of bounds.".into());
@@ -111,28 +98,21 @@ fn delete_todolist(filepath: &PathBuf, index: usize) -> Result<(), Box<dyn Error
 /// * `copy` `otherpath` must copy a file into the list
 /// * `delete` `id` removes line from the list
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
-
-    let filepath: PathBuf = home_dir().unwrap_or_else(|| {
-        println!("could not find home directory, using curent location");
-        PathBuf::new()
-    }).join("todo_list");
+    let filepath: PathBuf = home_dir()
+        .unwrap_or_else(|| {
+            println!("could not find home directory, using curent location");
+            PathBuf::new()
+        })
+        .join("todo_list");
 
     match config.cmd.as_str() {
-        "new" => {
-            new_todolist(&filepath)
+        "new" => new_todolist(&filepath),
+        "list" => list_todolist(&filepath),
+        "add" => add_todolist(&filepath, config.args.unwrap()),
+        "copy" => copy_todolist(&filepath, config.args.unwrap()),
+        "delete" => delete_todolist(&filepath, config.args.unwrap().parse()?),
+        _ => {
+            Err("unrecognized command. Usage: list, new, add [name], copy [path], delete [index]")?
         }
-        "list" => {
-            list_todolist(&filepath)
-        }
-        "add" => {
-            add_todolist(&filepath, config.args.unwrap())
-        }
-        "copy" => {
-            copy_todolist(&filepath, config.args.unwrap())
-        }
-        "delete" => {
-            delete_todolist(&filepath, config.args.unwrap().parse()?)
-        }
-        _ => Err("unrecognized command. Usage: list, new, add [name], copy [path], delete [index]")?
     }
 }
