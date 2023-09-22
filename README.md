@@ -1,5 +1,6 @@
 # rust_todo
 A very simple todo list application written in rust.
+The purpose of this application is to learn Rust by building something simple that can still be useful.
 
 ## Commands
 * `new`: creates a new to-do list.
