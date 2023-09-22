@@ -15,7 +15,7 @@ pub struct Config {
 
 impl Config {
     /// Arguments in config must be one of:
-    /// `create`, `list`, `add` `item`, `copy path`.
+    /// `new`, `list`, `add` `item`, `copy` `path`, `delete` `index`.
     pub fn new(args: &[String]) -> Result<Config, &'static str> {
         if args.len() < 2 {
             return Err(
